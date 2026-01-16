@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-app.set('trust proxy', 1);
 const mongoose = require('mongoose');
 const session = require('express-session');
 const methodOverride = require('method-override');
@@ -15,6 +14,10 @@ const hpp = require('hpp');
 const MongoStore = require('connect-mongo').default || require('connect-mongo');
 
 const app = express();
+
+// --- FIX FOR RENDER DEPLOYMENT ---
+// This tells Express to trust Render's proxy so rateLimit works
+app.set('trust proxy', 1);
 
 // ==========================================
 // 1. NETWORK SECURITY
@@ -54,15 +57,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ==========================================
 
 // MANUAL MONGO SANITIZE
-// This safely removes '$' keys to prevent Injection without crashing the server
 app.use((req, res, next) => {
     function clean(obj) {
         if (obj instanceof Object) {
             for (const key in obj) {
                 if (/^\$/.test(key)) {
-                    delete obj[key]; // Delete dangerous keys like $gt
+                    delete obj[key];
                 } else {
-                    clean(obj[key]); // Check nested objects
+                    clean(obj[key]);
                 }
             }
         }
