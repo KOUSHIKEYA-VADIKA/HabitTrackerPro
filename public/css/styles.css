@@ -1,0 +1,135 @@
+/* Smooth Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+
+/* Glassmorphism Utility */
+.glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Animation Delays (Used for the background blobs) */
+.animation-delay-2000 {
+    animation-delay: 2s;
+}
+.animation-delay-4000 {
+    animation-delay: 4s;
+}
+/* ... existing CSS ... */
+
+/* Tree Animations */
+@keyframes sway {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+}
+
+@keyframes bounce-slow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.animate-sway {
+    animation: sway 3s ease-in-out infinite;
+}
+
+.animate-bounce-slow {
+    animation: bounce-slow 2s ease-in-out infinite;
+}
+/* --- CONTAINER LAYOUTS --- */
+.section-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    font-family: sans-serif;
+}
+
+/* --- BADGES STYLING --- */
+.badges-wrapper {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.badge {
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ccc;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    
+    /* TRUNCATION LOGIC: Keeps badges distinct and uniform */
+    max-width: 150px;         /* Adjust this width to control badge length */
+    white-space: nowrap;      /* Forces text into a single line */
+    overflow: hidden;         /* Hides the overflow text */
+    text-overflow: ellipsis;  /* Adds '...' at the end */
+    vertical-align: middle;
+    cursor: default;          /* Optional: shows it's not a button */
+}
+
+.badge:hover {
+    /* Optional: Show full text on hover can be done via title attribute */
+    background-color: #e0e0e0;
+}
+
+/* --- JOURNAL STYLING --- */
+.journal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.journal-card {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease;
+}
+
+.journal-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.journal-date {
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.journal-title {
+    margin: 0 0 10px 0;
+    font-size: 1.2rem;
+    color: #222;
+}
+
+.journal-excerpt {
+    color: #555;
+    font-size: 0.95rem;
+    margin: 0;
+    
+    /* TRUNCATION LOGIC: Limits to 3 lines */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;   /* Shows exactly 3 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.5em;
+    max-height: 4.5em;       /* Fallback height calculation (1.5em * 3) */
+}

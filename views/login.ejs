@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - HabitFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1', // Indigo-500
+                            600: '#4f46e5', // Indigo-600
+                            700: '#4338ca', // Indigo-700
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800 h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white w-full max-w-md p-8 rounded-2xl shadow-xl border border-gray-100">
+        
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-brand-600 mb-2">
+                <i class="fa-solid fa-chart-line"></i> HabitFlow
+            </h1>
+            <p class="text-gray-500">Welcome back! Please login to continue.</p>
+        </div>
+
+        <% if (error) { %>
+            <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r shadow-sm flex items-start gap-3 animate-pulse">
+                <i class="fa-solid fa-circle-exclamation mt-1"></i>
+                <div>
+                    <p class="font-bold text-sm">Login Failed</p>
+                    <p class="text-sm"><%= error %></p>
+                </div>
+            </div>
+        <% } %>
+
+        <form action="/auth/login" method="POST" class="space-y-5">
+            
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <input type="text" name="username" placeholder="Enter your username" required
+                        class="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <input type="password" name="password" placeholder="Enter your password" required
+                        class="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all">
+                </div>
+            </div>
+
+            <button type="submit" 
+                class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-brand-500/30 transition-all transform hover:scale-[1.02]">
+                Sign In
+            </button>
+        </form>
+
+        <div class="mt-8 text-center text-sm text-gray-500">
+            <p>Don't have an account? 
+                <a href="/auth/register" class="text-brand-600 font-bold hover:underline">Sign up for free</a>
+            </p>
+        </div>
+
+    </div>
+
+</body>
+</html>

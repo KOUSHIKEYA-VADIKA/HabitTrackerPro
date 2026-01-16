@@ -1,0 +1,283 @@
+<%- include('header') %>
+
+<% 
+function getTreeVisual(streak) {
+    if (streak <= 2) return { icon: '🌱', label: 'Seedling', color: 'text-green-400', animation: '' };
+    if (streak <= 7) return { icon: '🌿', label: 'Sapling', color: 'text-green-500', animation: 'animate-sway' };
+    if (streak <= 14) return { icon: '🌳', label: 'Young Tree', color: 'text-green-600', animation: 'animate-sway' };
+    if (streak <= 30) return { icon: '🌳🍎', label: 'Fruit Tree', color: 'text-green-600', animation: 'animate-bounce-slow' };
+    return { icon: '🌳🍎✨', label: 'Master Tree', color: 'text-yellow-500', animation: 'animate-pulse' };
+}
+%>
+
+<style>
+    /* 1. Badge Truncation (Single Line) */
+    .badge-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 99px;
+        background-color: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        color: #374151;
+        font-size: 0.8rem;
+        font-weight: 600;
+        max-width: 140px;
+    }
+    .dark .badge-pill {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: #e5e7eb;
+    }
+    .badge-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* 2. Journal Truncation (Multi-Line) */
+    .journal-preview {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.4em;
+        max-height: 4.2em;
+    }
+</style>
+
+<div id="note-modal" class="fixed inset-0 bg-black/60 z-[60] hidden backdrop-blur-sm flex items-center justify-center">
+    <div class="bg-white dark:bg-dark-800 p-6 rounded-2xl shadow-2xl w-full max-w-sm transform transition-all scale-100 animate-float">
+        <h3 class="text-xl font-bold mb-2">Great Job! 🎉</h3>
+        <p class="text-gray-500 text-sm mb-4">Quick note (Optional - Max 2 lines)</p>
+        
+        <textarea id="note-input" 
+            maxlength="140" 
+            oninput="document.getElementById('char-count').innerText = this.value.length"
+            class="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 h-20 resize-none" 
+            placeholder="I felt energized..."></textarea>
+            
+        <div class="text-right text-xs text-gray-400 mb-4 mt-1">
+            <span id="char-count">0</span>/140
+        </div>
+
+        <div class="flex gap-2">
+            <button onclick="closeModalAndSubmit(false)" class="flex-1 py-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Skip</button>
+            <button onclick="closeModalAndSubmit(true)" class="flex-1 py-2 rounded-lg bg-brand-600 text-white font-bold hover:bg-brand-500">Save Note</button>
+        </div>
+    </div>
+</div>
+
+<div id="history-modal" class="fixed inset-0 bg-black/60 z-[60] hidden backdrop-blur-sm flex items-center justify-center">
+    <div class="bg-white dark:bg-dark-800 p-6 rounded-2xl shadow-2xl w-full max-w-md h-[500px] flex flex-col transform transition-all scale-100 animate-float">
+        <div class="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">
+            <div>
+                <h3 class="text-xl font-bold" id="history-title">Journal History</h3>
+                <p class="text-xs text-gray-400">Past entries for this habit</p>
+            </div>
+            <button onclick="closeHistoryModal()" class="text-gray-400 hover:text-red-500 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+        
+        <div id="history-list" class="flex-1 overflow-y-auto space-y-3 pr-2">
+            </div>
+    </div>
+</div>
+
+<div class="flex h-screen overflow-hidden relative">
+    
+    <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm transition-opacity" onclick="toggleSidebar()"></div>
+
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-dark-800 shadow-2xl transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0 md:flex flex-col md:shadow-xl overflow-y-auto">
+        <div class="p-6 flex justify-between items-center">
+            <div class="text-2xl font-bold text-brand-500">
+                <i class="fa-solid fa-chart-line mr-2"></i>HabitFlow
+            </div>
+            <button class="md:hidden text-gray-500 hover:text-red-500" onclick="toggleSidebar()">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="px-6 py-4">
+            <div class="bg-indigo-50 dark:bg-gray-700 rounded-xl p-4 text-center">
+                <h3 class="text-sm text-gray-500 dark:text-gray-300 mb-2">Focus Timer</h3>
+                <div id="timer-display" class="text-3xl font-mono font-bold mb-2">25:00</div>
+                <div class="flex justify-center gap-2">
+                    <button id="start-timer" class="p-2 bg-brand-500 rounded-full text-white hover:bg-brand-600 shadow-lg"><i class="fa-solid fa-play"></i></button>
+                    <button id="reset-timer" class="p-2 bg-gray-400 rounded-full text-white hover:bg-gray-500"><i class="fa-solid fa-rotate-right"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Trophy Room</h3>
+            
+            <div class="flex flex-wrap gap-2">
+                <% if(user.badges.length === 0) { %>
+                    <p class="text-xs text-gray-400 italic">No badges yet. Keep going!</p>
+                <% } %>
+                
+                <% user.badges.forEach(badge => { %>
+                    <div class="badge-pill" title="<%= badge.name %>">
+                        <span><%= badge.icon %></span>
+                        <span class="badge-text"><%= badge.name %></span>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2 mt-4">
+            <a href="#" class="flex items-center px-4 py-3 bg-brand-50 dark:bg-gray-700 text-brand-600 dark:text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-table-columns mr-3"></i> Dashboard
+            </a>
+            <a href="/auth/logout" class="flex items-center px-4 py-3 text-gray-500 hover:bg-red-50 hover:text-red-500 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                <i class="fa-solid fa-right-from-bracket mr-3"></i> Logout
+            </a>
+        </nav>
+        
+        <div class="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-dark-900 mt-auto">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center text-white font-bold shadow-lg">
+                    <%= user.username[0].toUpperCase() %>
+                </div>
+                <div>
+                    <p class="font-bold">Lvl <%= user.level %></p>
+                    <div class="w-24 h-2 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                        <div class="h-full bg-green-400" style="width: <%= (user.xp / (user.level * 100)) * 100 %>%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto bg-gray-100 dark:bg-dark-900 relative w-full">
+        <header class="bg-white dark:bg-dark-800 p-4 shadow-sm flex justify-between items-center md:hidden sticky top-0 z-30">
+            <h1 class="font-bold text-xl flex items-center gap-2">
+                <i class="fa-solid fa-chart-line text-brand-500"></i> HabitFlow
+            </h1>
+            <button onclick="toggleSidebar()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+        </header>
+
+        <div class="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold">Hello, <%= user.username %> 👋</h1>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm">Let's grow your garden today!</p>
+                </div>
+                <button id="theme-toggle" class="p-3 rounded-full bg-white dark:bg-gray-700 shadow-md hover:scale-110 transition">
+                    <i class="fa-solid fa-moon dark:hidden text-indigo-600"></i>
+                    <i class="fa-solid fa-sun hidden dark:inline text-yellow-400"></i>
+                </button>
+            </div>
+
+            <div class="bg-white dark:bg-dark-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <form action="/habits" method="POST" class="flex flex-col md:flex-row gap-4">
+                    <input type="text" name="title" placeholder="New Habit (e.g., Read 10 pages)" class="flex-1 px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 transition" required>
+                    <select name="category" class="px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="Health">Health</option>
+                        <option value="Coding">Coding</option>
+                        <option value="Learning">Learning</option>
+                        <option value="Fitness">Fitness</option>
+                    </select>
+                    <button class="px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl transition shadow-lg shadow-brand-500/30 flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Add
+                    </button>
+                </form>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <% habits.forEach(habit => { %>
+                    <% const tree = getTreeVisual(habit.streak); %>
+                    <div class="bg-white dark:bg-dark-800 p-6 rounded-2xl shadow-sm hover:shadow-lg transition border border-gray-100 dark:border-gray-700 relative overflow-hidden group">
+                        
+                        <div class="absolute top-4 right-4 flex gap-2 z-10">
+                            <button 
+                                onclick="viewHistory('<%= habit.title %>', this.dataset.journal)"
+                                data-journal="<%= JSON.stringify(habit.journal || []) %>"
+                                class="text-gray-300 hover:text-brand-500 transition p-1" 
+                                title="View Journal History">
+                                <i class="fa-solid fa-book-open"></i>
+                            </button>
+                            
+                            <button onclick="deleteHabit('<%= habit._id %>')" class="text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100 p-1" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+
+                        <div class="mb-4">
+                            <span class="text-xs font-bold px-2 py-1 rounded bg-brand-50 text-brand-600 dark:bg-gray-700 dark:text-gray-300 uppercase tracking-wider"><%= habit.category %></span>
+                        </div>
+
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-16 h-16 rounded-full bg-green-50 dark:bg-gray-700 flex items-center justify-center text-3xl shadow-inner <%= tree.animation %>">
+                                <%= tree.icon %>
+                            </div>
+                            <div class="flex-1 overflow-hidden">
+                                <h3 class="text-xl font-bold truncate"><%= habit.title %></h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Streak: <span class="font-bold text-orange-500"><%= habit.streak %> days</span></p>
+                            </div>
+                        </div>
+
+                        <% if(habit.journal && habit.journal.length > 0) { %>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg mb-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition" 
+                                 onclick="viewHistory('<%= habit.title %>', this.dataset.journal)"
+                                 data-journal="<%= JSON.stringify(habit.journal) %>">
+                                <p class="text-xs text-gray-400 font-bold mb-1">Latest Note:</p>
+                                <p class="text-xs text-gray-600 dark:text-gray-300 italic journal-preview">
+                                    "<%= habit.journal[habit.journal.length - 1].note %>"
+                                </p>
+                            </div>
+                        <% } else { %>
+                            <div class="h-4 mb-4"></div> 
+                        <% } %>
+
+                        <div class="habit-heatmap flex gap-1 mb-4 h-6 items-end opacity-50" data-logs="<%= JSON.stringify(habit.logs) %>"></div>
+
+                        <% 
+                            const todayStr = new Date().toDateString();
+                            const isDone = habit.logs.some(log => new Date(log).toDateString() === todayStr);
+                        %>
+                        <button onclick="prepMarkDone('<%= habit._id %>', this, <%= isDone %>)" 
+                            class="w-full py-3 rounded-xl transition font-semibold flex items-center justify-center gap-2 group-hover:shadow-md 
+                            <%= isDone ? 'bg-green-500 text-white cursor-default' : 'bg-gray-100 dark:bg-gray-700 hover:bg-brand-500 hover:text-white' %>"
+                            <%= isDone ? 'disabled' : '' %>>
+                            <% if (isDone) { %>
+                                <i class="fa-solid fa-check-double"></i> Done Today!
+                            <% } else { %>
+                                <i class="fa-solid fa-check"></i> Water Tree 💧
+                            <% } %>
+                        </button>
+                    </div>
+                <% }) %>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
+                <div class="bg-white dark:bg-dark-800 p-6 rounded-2xl shadow-sm overflow-hidden">
+                    <h3 class="font-bold text-lg mb-4">Yearly Garden View</h3>
+                    <div id="year-heatmap" class="flex flex-wrap gap-4 overflow-x-auto pb-2"></div>
+                </div>
+                <div class="bg-white dark:bg-dark-800 p-6 rounded-2xl shadow-sm">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg">Performance</h3>
+                        <select id="chart-selector" class="text-sm bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-1 border-none focus:ring-2 focus:ring-brand-500">
+                            <option value="streaks">Current Streaks</option>
+                            <option value="weekly">Weekly Activity</option>
+                        </select>
+                    </div>
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="/js/charts.js"></script>
+<script src="/js/timer.js"></script>
+<script src="/js/main.js"></script>
+<%- include('footer') %>
